@@ -147,11 +147,8 @@ if [ "${BUILD_IMAGE}" != "--chroot" ]; then
 
 	if [ -z "${BUILD_IMAGE}" ]; then
 		einfo "No block device given, creating a image"
+		eindent
 		
-		ebegin "Making build directory"
-		mkdir -p "${BUILD_DIR}" >/dev/null
-		eend $? 1
-
 		BUILD_IMAGE="${BUILD_DIR}/${DEBIAN_RELEASE}+rib+rpi-$(date +"%Y%m%d").img"
 
 		ebegin "Creating blank image"
@@ -161,6 +158,8 @@ if [ "${BUILD_IMAGE}" != "--chroot" ]; then
 		ebegin "Setting up loopback for image"
 		IMAGE_DEVICE="$(losetup -f --show "${BUILD_IMAGE}")"
 		eend $? 1
+
+		eoutdent # No block device given, creating a image
 
 	else
 		einfo "Block device given, not making an image"
@@ -259,7 +258,7 @@ EOF
 	eindent
 
 	ebegin "Bootstrapping stage 1"
-	debootstrap --foreign --arch armel "${DEBIAN_RELEASE}" "${BUILD_ROOT_DIR}" "${DEBIAN_MIRROR}" &>/dev/null
+	debootstrap --foreign --variant=minbase --arch armel "${DEBIAN_RELEASE}" "${BUILD_ROOT_DIR}" "${DEBIAN_MIRROR}" >/dev/null
 	eend $? 1
 
 	ebegin "Copying qemu-arm-static into image"
@@ -459,14 +458,14 @@ else
 	echo
 
 	ebegin "Updating APT cache"
-	aptitude update >/dev/null
+	apt-get update >/dev/null
 	eend $?
 
 	einfo "Fixing locales"
 	eindent
 
 	ebegin "Installing"
-	aptitude -y install locales &>/dev/null
+	apt-get -y install locales &>/dev/null
 	eend $? 1
 
 	ebegin "Configuring"
@@ -493,8 +492,8 @@ EOF
 	debconf-set-selections /debconf.set >/dev/null
 	eend $? 1
 
-	ebegin "Installing first set of base packages"
-	aptitude -y install locales git-core binutils ca-certificates curl &>/dev/null
+	ebegin "Installing core packages"
+	apt-get -y install locales git-core binutils ca-certificates curl wget module-init-tools &>/dev/null
 	eend $? 1
 
 	einfo "Installing Raspberry Pi software ..."
@@ -522,21 +521,29 @@ EOF
 
 	eoutdent # Installing Raspberry Pi software
 
-	ebegin "Installing second set of base packages"
-	aptitude -y install console-common ntp openssh-server less vim &>/dev/null
+	ebegin "Installing base packages"
+	apt-get -y install console-common ntp openssh-server less vim &>/dev/null
 	eend $? 1
 
 	ebegin "Setting root password"
 	chpasswd <<< "root:raspberry"
 	eend $? 1
 
-	ebegin "Fixing udev network rules"
-	sed -i -e 's/KERNEL\!="eth\*|/KERNEL\!="/' /lib/udev/rules.d/75-persistent-net-generator.rules >dev/null
-	eend $? 1
+	if [ -e /lib/udev/rules.d/75-persistent-net-generator.rules ]; then
+		ebegin "Fixing udev network rules"
+		sed -i -e 's/KERNEL\!="eth\*|/KERNEL\!="/' /lib/udev/rules.d/75-persistent-net-generator.rules >dev/null
+		eend $? 1
+	else
+		ewarn "/lib/udev/rules.d/75-persistent-net-generator.rules does not exist"
+	fi
 
-	ebegin "Removing existing network rules"
-	rm -f /etc/udev/rules.d/70-persistent-net.rules >dev/null
-	eend $? 1
+	if [ -e /etc/udev/rules.d/70-persistent-net.rules ]; then
+		ebegin "Removing existing network rules"
+		rm -f /etc/udev/rules.d/70-persistent-net.rules >dev/null
+		eend $? 1
+	else
+		einfo "/etc/udev/rules.d/70-persistent-net.rules is already non-existant"
+	fi
 
 	cd overlay
 	if [ -x overlay.sh ]; then
@@ -555,12 +562,12 @@ EOF
 	eindent
 
 	ebegin "Updating APT cache"
-	aptitude update >/dev/null
+	apt-get update >/dev/null
 	eend $?
 
-	ebegin "Cleaning aptitude"
-	aptitude clean >/dev/null
-	eend $?
+	#ebegin "Cleaning aptitude"
+	#aptitude clean >/dev/null
+	#eend $?
 
 	ebegin "Cleaning apt-get"
 	apt-get clean >/dev/null
