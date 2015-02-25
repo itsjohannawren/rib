@@ -12,7 +12,7 @@
 # By default this script does nothing.
 
 if [ -e /etc/rib.stage ]; then
-	if [ "$(< /etc/parzivalian.setup)" = "grow_partition" ]; then
+	if [ "$(< /etc/rib.stage)" = "grow_partition" ]; then
 		PART_START="$(fdisk -l /dev/mmcblk0 | grep 'mmcblk0p2' | sed -e 's/^\S*\s*//' -e 's/^\*\s*//' -e 's/\s\s*.*$//')"
 		cat <<EOF | fdisk /dev/mmcblk0
 d
