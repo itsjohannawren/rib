@@ -425,11 +425,11 @@ EOF
 			eoutdent # Reloading image partitions
 
 			ebegin "fsck'ing root filesystem"
-			fsck -fy "${BUILD_ROOT_DEVICE}" &>/dev/null
+			fsck -fy "${BUILD_ROOT_DEVICE}"
 			eend $? 1
 
 			ebegin "Growing root filesystem"
-			resize2fs "${BUILD_ROOT_DEVICE}" &>/dev/null
+			resize2fs "${BUILD_ROOT_DEVICE}"
 			eend $?
 
 			ebegin "Trimming image file"
@@ -493,7 +493,7 @@ EOF
 	eend $? 1
 
 	ebegin "Installing core packages"
-	apt-get -y install locales git-core binutils ca-certificates curl wget module-init-tools &>/dev/null
+	apt-get -y install locales git-core binutils ca-certificates curl wget module-init-tools net-tools wireless-tools dosfstools udhcpc &>/dev/null
 	eend $? 1
 
 	einfo "Installing Raspberry Pi software ..."
