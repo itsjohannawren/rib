@@ -30,5 +30,6 @@ EOF
 	elif [ "$(< /etc/rib.stage)" = "grow_filesystem" ]; then
 		resize2fs /dev/mmcblk0p2
 		rm /etc/rib.stage
+		(reboot &) &
 	fi
 fi

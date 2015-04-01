@@ -424,6 +424,8 @@ EOF
 			
 			eoutdent # Reloading image partitions
 
+			sleep 10
+
 			ebegin "fsck'ing root filesystem"
 			fsck -fy "${BUILD_ROOT_DEVICE}"
 			eend $? 1
@@ -545,18 +547,13 @@ EOF
 		einfo "/etc/udev/rules.d/70-persistent-net.rules is already non-existant"
 	fi
 
-	cd overlay
-	if [ -x overlay.sh ]; then
+	if [ -x /overlay/overlay.sh ]; then
+		cd /overlay
 		ebegin "Stage 4 - Running overlay script"
 		./overlay.sh
 		eend $? 1
-
-	elif [ -n "$(ls -A1 | grep -v '^.keep$')" ]; then
-		ebegin "Stage 4 - Copying overlay to root"
-		rsync -aHv * / >/dev/null
-		eend $? 1
+		cd /
 	fi
-	cd /
 
 	einfo "Cleaning up ..."
 	eindent
